@@ -25,6 +25,12 @@ dependencies = [
     "tqdm",
     "coloredlogs"
 ]
+
+[project.optional-dependencies]
+tests = [
+    "pytest"
+]
+
 [project.urls]
 "Homepage" = "https://github.com/the-mysh/rl-coursework"
 
