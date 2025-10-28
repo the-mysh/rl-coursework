@@ -1,0 +1,14 @@
+name: rl-toolbox
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python>=3.12
+  - pytest
+  - numpy
+  - matplotlib
+  - tqdm
+  - coloredlogs
+  - pip
+  - pip:
+      - -e .
