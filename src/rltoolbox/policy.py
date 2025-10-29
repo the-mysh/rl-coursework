@@ -1,6 +1,10 @@
 from abc import abstractmethod, ABC
 from typing import Iterable
-from random import choice
+from random import random, choice
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class Action:
@@ -61,25 +65,44 @@ class Policy(ABC):
         return current_best_actions
 
     @abstractmethod
-    def _choose_action(self, best_actions: Iterable[Action]) -> Action:
+    def _choose_action(self) -> Action:
         pass
 
     def __call__(self):
-        best_actions = self.get_best_actions()
-        return self._choose_action(best_actions)
+        return self._choose_action()
 
 
 class GreedyPolicy(Policy):
-    def __init__(self, action_names: Iterable[str]):
-        super().__init__(action_names)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-    def _choose_action(self, best_actions: list[Action]) -> Action:
-        return choice(best_actions)
+    def _choose_action(self) -> Action:
+        return choice(self.get_best_actions())
+
+
+class EpsilonGreedyPolicy(Policy):
+    def __init__(self, epsilon: float, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._epsilon = epsilon
+        self._logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+
+    def _choose_action(self) -> Action:
+        if random() < self._epsilon:
+            self._logger.debug("Choosing action randomly")
+            return choice(self._actions)
+
+        self._logger.debug("Choosing from best actions")
+        return choice(self.get_best_actions())
+
 
 
 if __name__ == '__main__':
-    p = GreedyPolicy([str(i) for i in range(5)])
+    logging.basicConfig(level=logging.DEBUG)
+
+    actions = [str(i) for i in range(5)]
+    gp = GreedyPolicy(actions)
+    egp = EpsilonGreedyPolicy(epsilon=0.1, action_names=actions)
 
     for i in range(10):
-        print(f"Iteration {i} - choosing {p()}")
+        print(f"Iteration {i}; greedy_policy - {gp().name}; epsilon greedy policy - {egp().name}")
 
