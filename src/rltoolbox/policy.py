@@ -100,9 +100,10 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
 
     actions = [str(i) for i in range(5)]
-    gp = GreedyPolicy(actions)
+    gp0 = GreedyPolicy(actions)
+    gp5 = GreedyPolicy(actions, initial_expected_reward=5)
     egp = EpsilonGreedyPolicy(epsilon=0.1, action_names=actions)
 
     for i in range(10):
-        print(f"Iteration {i}; greedy_policy - {gp().name}; epsilon greedy policy - {egp().name}")
+        print(f"Iteration {i}:\n\tGP0: {gp0().name};\n\tGP5: {gp5().name};\n\tEGP: {egp().name}")
 
