@@ -2,6 +2,8 @@ from abc import abstractmethod, ABC
 from typing import Iterable
 from random import random, choice
 import logging
+from math import sqrt, log
+from typing import Callable
 
 
 logger = logging.getLogger(__name__)
@@ -42,24 +44,31 @@ class Action:
 class Policy(ABC):
     def __init__(self, action_names: Iterable[str], initial_expected_reward: float = 0):
         self._actions = tuple(Action(name, initial_expected_reward) for name in action_names)
+        self._steps_made = 0
 
     @property
     def actions(self) -> tuple[Action, ...]:
         return self._actions
 
-    def get_best_actions(self):
-        a0 = self._actions[0]
+    @staticmethod
+    def get_best_actions(actions: tuple[Action, ...], eval_func: Callable[[Action], float] | None = None
+                         ) -> list[Action]:
+        a0 = actions[0]
         current_best_reward = a0.expected_reward
         current_best_actions = [a0]
 
-        for a in self._actions[1:]:
-            if (r := a.expected_reward) < current_best_reward:
+        if eval_func is None:
+            eval_func = lambda a_: a_.expected_reward
+
+        for a in actions[1:]:
+            v = eval_func(a)
+            if v < current_best_reward:
                 continue
 
-            if r == current_best_reward:
+            if v == current_best_reward:
                 current_best_actions.append(a)
             else:
-                current_best_reward = r
+                current_best_reward = v
                 current_best_actions = [a]
 
         return current_best_actions
@@ -77,7 +86,7 @@ class GreedyPolicy(Policy):
         super().__init__(*args, **kwargs)
 
     def _choose_action(self) -> Action:
-        return choice(self.get_best_actions())
+        return choice(self.get_best_actions(self._actions))
 
 
 class EpsilonGreedyPolicy(Policy):
@@ -92,18 +101,33 @@ class EpsilonGreedyPolicy(Policy):
             return choice(self._actions)
 
         self._logger.debug("Choosing from best actions")
-        return choice(self.get_best_actions())
+        return choice(self.get_best_actions(self._actions))
+
+
+class UCBPolicy(GreedyPolicy):
+    def __init__(self, exploitation_rate: float, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._exploitation_rate = exploitation_rate
+
+    def get_ucb_value(self, action: Action) -> float:
+        if not action.times_taken:
+            return action.expected_reward
+        return action.expected_reward + self._exploitation_rate * sqrt(log(self._steps_made) / action.times_taken)
+
+    def _choose_action(self) -> Action:
+        return choice(self.get_best_actions(self._actions, eval_func=self.get_ucb_value))
 
 
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
 
-    actions = [str(i) for i in range(5)]
-    gp0 = GreedyPolicy(actions)
-    gp5 = GreedyPolicy(actions, initial_expected_reward=5)
-    egp = EpsilonGreedyPolicy(epsilon=0.1, action_names=actions)
+    ans = [str(i) for i in range(5)]
+    gp0 = GreedyPolicy(ans)
+    gp5 = GreedyPolicy(ans, initial_expected_reward=5)
+    egp = EpsilonGreedyPolicy(epsilon=0.1, action_names=ans)
+    ucb = UCBPolicy(exploitation_rate=0.1, action_names=ans)
 
     for i in range(10):
-        print(f"Iteration {i}:\n\tGP0: {gp0().name};\n\tGP5: {gp5().name};\n\tEGP: {egp().name}")
+        print(f"Iteration {i}:\n\tGP0: {gp0().name};\n\tGP5: {gp5().name};\n\tEGP: {egp().name}\n\tUCB: {ucb().name}")
 
