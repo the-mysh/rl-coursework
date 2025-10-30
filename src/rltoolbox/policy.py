@@ -113,7 +113,7 @@ class UCBPolicy(GreedyPolicy):
             raise ValueError(f"Exploration rate cannot be negative; got {exploration_rate}")
 
         if exploration_rate == 0:
-            self._logger.warning("With exploration rate = 0, UCB policy falls back to greedy policy")
+            self._logger.warning("With exploration rate = 0, UCB policy falls back to histrgreedy policy")
 
         self._exploration_rate = exploration_rate
 
@@ -133,9 +133,22 @@ if __name__ == '__main__':
     ans = [str(i) for i in range(5)]
     gp0 = GreedyPolicy(ans)
     gp5 = GreedyPolicy(ans, initial_expected_reward=5)
-    egp = EpsilonGreedyPolicy(epsilon=0.1, action_names=ans)
+    egp0_1 = EpsilonGreedyPolicy(epsilon=0.1, action_names=ans)
+    egp0_01 = EpsilonGreedyPolicy(epsilon=0.01, action_names=ans)
     ucb = UCBPolicy(exploration_rate=0.1, action_names=ans)
 
-    for i in range(10):
-        print(f"Iteration {i}:\n\tGP0: {gp0().name};\n\tGP5: {gp5().name};\n\tEGP: {egp().name}\n\tUCB: {ucb().name}")
+    policies = {
+        "greedy r0=0": GreedyPolicy(ans),
+        "greedy r0=5": GreedyPolicy(ans, initial_expected_reward=5),
+        "epsilon-greedy e=0.1": EpsilonGreedyPolicy(epsilon=0.1, action_names=ans),
+        "epsilon-greedy e=0.01": EpsilonGreedyPolicy(epsilon=0.01, action_names=ans),
+        "UCB": UCBPolicy(exploration_rate=0.1, action_names=ans)
+    }
 
+    t = max(len(p) for p in policies)
+    t = (t // 4 + 1) * 4
+
+    for i in range(10):
+        print(f"Iteration {i}:")
+        for policy_name, policy in policies.items():
+            print(f"\t{policy_name}:{(t-len(policy_name))*' '}action {policy().name}")
