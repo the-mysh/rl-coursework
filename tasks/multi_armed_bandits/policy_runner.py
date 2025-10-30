@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def define_actions(n: int) -> list[Action]:
-    return [Action(str(i), gauss()) for i in range(n)]
+    return [Action(str(i+1), gauss()) for i in range(n)]
 
 
 def define_policies(actions: list[Action]) -> dict[str, Policy]:
