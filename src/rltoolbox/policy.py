@@ -10,17 +10,28 @@ logger = logging.getLogger(__name__)
 
 
 class Action:
-    def __init__(self, name: str, initial_expected_reward: float = 0.):
+    def __init__(self, name: str, average_reward: float):
         self._name = name
-        self._expected_reward = initial_expected_reward
-        self._times_taken = 0
-
-    def __str__(self) -> str:
-        return f"Action '{self._name}', taken {self._times_taken} times, expected reward: {self._expected_reward}"
+        self._average_reward = average_reward
 
     @property
     def name(self) -> str:
         return self._name
+
+
+class ActionEstimate:
+    def __init__(self, action: Action, initial_expected_reward: float = 0.):
+        self._action = action
+        self._expected_reward = initial_expected_reward
+        self._times_taken = 0
+
+    @property
+    def action(self) -> Action:
+        return self._action
+
+    @property
+    def action_name(self) -> str:
+        return self._action.name
 
     @property
     def expected_reward(self) -> float:
@@ -42,27 +53,30 @@ class Action:
 
 
 class Policy(ABC):
-    def __init__(self, action_names: Iterable[str], initial_expected_reward: float = 0):
-        self._actions = tuple(Action(name, initial_expected_reward) for name in action_names)
+    def __init__(self, actions: Iterable[Action], initial_expected_reward: float = 0):
+        self._actions = tuple(ActionEstimate(a, initial_expected_reward) for a in actions)
         self._steps_made = 0
 
         self._logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
     @property
-    def actions(self) -> tuple[Action, ...]:
+    def actions(self) -> tuple[ActionEstimate, ...]:
         return self._actions
 
     @staticmethod
-    def get_best_actions(actions: tuple[Action, ...], eval_func: Callable[[Action], float] | None = None
-                         ) -> list[Action]:
-        a0 = actions[0]
+    def get_best_actions(
+            action_estimates: tuple[ActionEstimate, ...],
+            eval_func: Callable[[ActionEstimate], float] | None = None
+        ) -> list[ActionEstimate]:
+
+        a0 = action_estimates[0]
         current_best_reward = a0.expected_reward
         current_best_actions = [a0]
 
         if eval_func is None:
             eval_func = lambda a_: a_.expected_reward
 
-        for a in actions[1:]:
+        for a in action_estimates[1:]:
             v = eval_func(a)
             if v < current_best_reward:
                 continue
@@ -76,7 +90,7 @@ class Policy(ABC):
         return current_best_actions
 
     @abstractmethod
-    def _choose_action(self) -> Action:
+    def _choose_action(self) -> ActionEstimate:
         pass
 
     def __call__(self):
@@ -87,7 +101,7 @@ class GreedyPolicy(Policy):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def _choose_action(self) -> Action:
+    def _choose_action(self) -> ActionEstimate:
         return choice(self.get_best_actions(self._actions))
 
 
@@ -96,7 +110,7 @@ class EpsilonGreedyPolicy(Policy):
         super().__init__(*args, **kwargs)
         self._epsilon = epsilon
 
-    def _choose_action(self) -> Action:
+    def _choose_action(self) -> ActionEstimate:
         if random() < self._epsilon:
             self._logger.debug("Choosing action randomly")
             return choice(self._actions)
@@ -113,36 +127,28 @@ class UCBPolicy(GreedyPolicy):
             raise ValueError(f"Exploration rate cannot be negative; got {exploration_rate}")
 
         if exploration_rate == 0:
-            self._logger.warning("With exploration rate = 0, UCB policy falls back to histrgreedy policy")
+            self._logger.warning("With exploration rate = 0, UCB policy falls back to greedy policy")
 
         self._exploration_rate = exploration_rate
 
-    def get_ucb_value(self, action: Action) -> float:
+    def get_ucb_value(self, action: ActionEstimate) -> float:
         if not action.times_taken:
             return float('inf')  # maximising action
         return action.expected_reward + self._exploration_rate * sqrt(log(self._steps_made) / action.times_taken)
 
-    def _choose_action(self) -> Action:
+    def _choose_action(self) -> ActionEstimate:
         return choice(self.get_best_actions(self._actions, eval_func=self.get_ucb_value))
 
 
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-
-    ans = [str(i) for i in range(5)]
-    gp0 = GreedyPolicy(ans)
-    gp5 = GreedyPolicy(ans, initial_expected_reward=5)
-    egp0_1 = EpsilonGreedyPolicy(epsilon=0.1, action_names=ans)
-    egp0_01 = EpsilonGreedyPolicy(epsilon=0.01, action_names=ans)
-    ucb = UCBPolicy(exploration_rate=0.1, action_names=ans)
+def main():
+    actions = [Action(str(i), 10*random()) for i in range(5)]
 
     policies = {
-        "greedy r0=0": GreedyPolicy(ans),
-        "greedy r0=5": GreedyPolicy(ans, initial_expected_reward=5),
-        "epsilon-greedy e=0.1": EpsilonGreedyPolicy(epsilon=0.1, action_names=ans),
-        "epsilon-greedy e=0.01": EpsilonGreedyPolicy(epsilon=0.01, action_names=ans),
-        "UCB": UCBPolicy(exploration_rate=0.1, action_names=ans)
+        "greedy r0=0": GreedyPolicy(actions),
+        "greedy r0=5": GreedyPolicy(actions, initial_expected_reward=5),
+        "epsilon-greedy e=0.1": EpsilonGreedyPolicy(epsilon=0.1, actions=actions),
+        "epsilon-greedy e=0.01": EpsilonGreedyPolicy(epsilon=0.01, actions=actions),
+        "UCB": UCBPolicy(exploration_rate=0.1, actions=actions),
     }
 
     t = max(len(p) for p in policies)
@@ -151,4 +157,9 @@ if __name__ == '__main__':
     for i in range(10):
         print(f"Iteration {i}:")
         for policy_name, policy in policies.items():
-            print(f"\t{policy_name}:{(t-len(policy_name))*' '}action {policy().name}")
+            print(f"\t{policy_name}:{(t-len(policy_name))*' '}action {policy().action_name}")
+
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
+    main()
