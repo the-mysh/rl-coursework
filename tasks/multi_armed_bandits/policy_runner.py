@@ -16,11 +16,11 @@ def define_actions(n: int) -> list[Action]:
 
 def define_policies(actions: list[Action]) -> dict[str, Policy]:
     policies = {
-        "greedy r0=0": GreedyPolicy(actions),
-        "greedy r0=5": GreedyPolicy(actions, initial_expected_reward=5),
-        "epsilon-greedy e=0.1": EpsilonGreedyPolicy(epsilon=0.1, actions=actions),
-        "epsilon-greedy e=0.01": EpsilonGreedyPolicy(epsilon=0.01, actions=actions),
-        "UCB": UCBPolicy(exploration_rate=0.1, actions=actions),
+        "greedy r$_0$=0": GreedyPolicy(actions),
+        "greedy r$_0$=5": GreedyPolicy(actions, initial_expected_reward=5),
+        r"epsilon-greedy $\epsilon$=0.1": EpsilonGreedyPolicy(epsilon=0.1, actions=actions),
+        r"epsilon-greedy $\epsilon$=0.01": EpsilonGreedyPolicy(epsilon=0.01, actions=actions),
+        "UCB c=2": UCBPolicy(exploration_rate=2, actions=actions),
     }
 
     return policies
