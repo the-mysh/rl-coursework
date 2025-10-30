@@ -8,7 +8,7 @@ dependencies:
   - numpy
   - matplotlib
   - tqdm
-  - coloredlogs
+  - notebook
   - pip
   - pip:
       - -e .
