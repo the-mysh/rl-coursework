@@ -1,8 +1,13 @@
 from random import gauss
 import logging
+import numpy as np
+import numpy.typing as npt
 
 from rltoolbox.action import Action
 from rltoolbox.policy import GreedyPolicy, EpsilonGreedyPolicy, UCBPolicy, Policy
+
+
+logger = logging.getLogger(__name__)
 
 
 def define_actions(n: int) -> list[Action]:
@@ -21,9 +26,19 @@ def define_policies(actions: list[Action]) -> dict[str, Policy]:
     return policies
 
 
+def run_policies(policies: dict[str, Policy], n_steps: int) -> dict[str, npt.NDArray[np.floating]]:
+    results = {}
+    for policy_name, policy in policies.items():
+        logger.debug(f"Running policy {policy_name} for {n_steps} steps")
+        results[policy_name] = policy.run(n_steps)
+
+    return results
+
+
 def main():
     actions = define_actions(10)
     policies = define_policies(actions)
+
 
     t = max(len(p) for p in policies)
     t = (t // 4 + 1) * 4

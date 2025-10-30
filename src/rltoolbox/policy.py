@@ -4,6 +4,8 @@ from random import random, choice
 import logging
 from math import sqrt, log
 from typing import Callable
+import numpy as np
+import numpy.typing as npt
 
 from rltoolbox.action import Action
 from rltoolbox.action_estimate import ActionEstimate
@@ -52,6 +54,19 @@ class Policy(ABC):
 
     def __call__(self):
         return self._choose_action()
+
+    def make_step(self):
+        ae = self._choose_action()
+        reward = ae.action.take()
+        ae.update(reward)
+        self._steps_made += 1
+        return reward
+
+    def run(self, n_steps: int) -> npt.NDArray[np.floating]:
+        rewards = np.zeros(n_steps)
+        for i in range(n_steps):
+            rewards[i] = self.make_step()
+        return rewards
 
 
 class GreedyPolicy(Policy):

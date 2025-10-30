@@ -10,6 +10,10 @@ class Action:
     def name(self) -> str:
         return self._name
 
+    @property
+    def average_reward(self) -> float:
+        return self._average_reward
+
     def take(self):
         reward = gauss(self._average_reward)
         return reward
