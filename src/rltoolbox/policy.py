@@ -1,6 +1,6 @@
 from abc import abstractmethod, ABC
 from typing import Iterable
-from random import random, choice
+from random import random, choice, gauss
 import logging
 from math import sqrt, log
 from typing import Callable
@@ -101,7 +101,7 @@ class UCBPolicy(GreedyPolicy):
 
 
 def main():
-    actions = [Action(str(i), 10*random()) for i in range(5)]
+    actions = [Action(str(i), gauss()) for i in range(5)]
 
     policies = {
         "greedy r0=0": GreedyPolicy(actions),
