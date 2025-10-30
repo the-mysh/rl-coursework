@@ -105,14 +105,14 @@ class EpsilonGreedyPolicy(Policy):
 
 
 class UCBPolicy(GreedyPolicy):
-    def __init__(self, exploitation_rate: float, *args, **kwargs):
+    def __init__(self, exploration_rate: float, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._exploitation_rate = exploitation_rate
+        self._exploration_rate = exploration_rate
 
     def get_ucb_value(self, action: Action) -> float:
         if not action.times_taken:
             return float('inf')  # maximising action
-        return action.expected_reward + self._exploitation_rate * sqrt(log(self._steps_made) / action.times_taken)
+        return action.expected_reward + self._exploration_rate * sqrt(log(self._steps_made) / action.times_taken)
 
     def _choose_action(self) -> Action:
         return choice(self.get_best_actions(self._actions, eval_func=self.get_ucb_value))
@@ -126,7 +126,7 @@ if __name__ == '__main__':
     gp0 = GreedyPolicy(ans)
     gp5 = GreedyPolicy(ans, initial_expected_reward=5)
     egp = EpsilonGreedyPolicy(epsilon=0.1, action_names=ans)
-    ucb = UCBPolicy(exploitation_rate=0.1, action_names=ans)
+    ucb = UCBPolicy(exploration_rate=0.1, action_names=ans)
 
     for i in range(10):
         print(f"Iteration {i}:\n\tGP0: {gp0().name};\n\tGP5: {gp5().name};\n\tEGP: {egp().name}\n\tUCB: {ucb().name}")
