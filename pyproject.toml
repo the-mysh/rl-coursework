@@ -22,7 +22,6 @@ dependencies = [
     "numpy",
     "matplotlib",
     "tqdm",
-    "notebook"
 ]
 
 [project.optional-dependencies]
