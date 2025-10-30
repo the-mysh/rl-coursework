@@ -111,7 +111,7 @@ class UCBPolicy(GreedyPolicy):
 
     def get_ucb_value(self, action: Action) -> float:
         if not action.times_taken:
-            return action.expected_reward
+            return float('inf')  # maximising action
         return action.expected_reward + self._exploitation_rate * sqrt(log(self._steps_made) / action.times_taken)
 
     def _choose_action(self) -> Action:
