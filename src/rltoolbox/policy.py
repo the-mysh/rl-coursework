@@ -46,6 +46,8 @@ class Policy(ABC):
         self._actions = tuple(Action(name, initial_expected_reward) for name in action_names)
         self._steps_made = 0
 
+        self._logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+
     @property
     def actions(self) -> tuple[Action, ...]:
         return self._actions
@@ -93,7 +95,6 @@ class EpsilonGreedyPolicy(Policy):
     def __init__(self, epsilon: float, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._epsilon = epsilon
-        self._logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
     def _choose_action(self) -> Action:
         if random() < self._epsilon:
@@ -107,6 +108,13 @@ class EpsilonGreedyPolicy(Policy):
 class UCBPolicy(GreedyPolicy):
     def __init__(self, exploration_rate: float, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        if exploration_rate < 0:
+            raise ValueError(f"Exploration rate cannot be negative; got {exploration_rate}")
+
+        if exploration_rate == 0:
+            self._logger.warning("With exploration rate = 0, UCB policy falls back to greedy policy")
+
         self._exploration_rate = exploration_rate
 
     def get_ucb_value(self, action: Action) -> float:
