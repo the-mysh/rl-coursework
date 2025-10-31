@@ -14,14 +14,13 @@ class GamblerPolicy:
     def define_ptpm(self) -> npt.NDArray[np.floating]:
 
         # policy transition probability matrix: s -> s'
-        ptpm = np.zeros((self.n_nonterminal_states, self.n_states))
+        ptpm = np.zeros((self.n_states, self.n_states))
         for idx, action in enumerate(self.policy_estimate):
             assert isinstance(action, np.integer)
-            starting_capital = idx + 1  # state of 1$ is at index 0
+            starting_capital = idx + 1  # policy defined only for non-terminal states; idx 0 is for state of 1$
             success_capital = starting_capital + action  # action is number of dollars to bet
             failure_capital = starting_capital - action
 
-            # subtract ones when indexing on starting state axis only; the other axis starts with terminal state 0
-            ptpm[idx, success_capital] = self.success_probability
-            ptpm[idx, failure_capital] = 1 - self.success_probability
+            ptpm[starting_capital, success_capital] = self.success_probability
+            ptpm[starting_capital, failure_capital] = 1 - self.success_probability
         return ptpm
