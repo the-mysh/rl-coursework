@@ -1,12 +1,12 @@
 import numpy as np
 import numpy.testing as np_test
 
-from utils import GamblerPolicy
+from utils import GamblerProblemModel
 
 
 def test_initial_ptpm():
-    gp = GamblerPolicy(goal=5, success_probability=0.2)
-    ptpm = gp.define_ptpm()
+    gp = GamblerProblemModel(goal=5, success_probability=0.2)
+    ptpm = gp.define_ptpm(gp.propose_policy_estimate())
 
     assert ptpm.shape == (6, 6)
     assert (r.sum() == 1 for r in ptpm[1:-1])
@@ -24,5 +24,5 @@ def test_initial_ptpm():
 
 
 def test_immediate_rewards():
-    gp = GamblerPolicy(goal=8, success_probability=0.2)
+    gp = GamblerProblemModel(goal=8, success_probability=0.2)
     np_test.assert_array_equal(gp.immediate_rewards, np.array(8 * [0] + [1]).astype(float))
