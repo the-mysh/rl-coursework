@@ -34,6 +34,7 @@ class GamblerProblemModel:
     def run_value_iteration(self, convergence: float = 10e-4, max_iter: int = 1000, keep_track: bool = False):
         v_track = []
         pi_track = []
+        err_track = []
 
         transition_probs = self.define_transition_probability_matrices()
         imr = self.immediate_rewards
@@ -44,12 +45,13 @@ class GamblerProblemModel:
             comp = np.matvec(transition_probs, v + imr)
             new_v = np.max(comp, axis=0)
             new_pi = np.argmax(comp, axis=0)
+            err = np.max(np.abs(v - new_v))
 
             if keep_track:
                 v_track.append(new_v)
                 pi_track.append(new_pi)
+                err_track.append(err)
 
-            err = np.max(np.abs(v - new_v))
             if err < convergence:
                 break
 
@@ -59,6 +61,7 @@ class GamblerProblemModel:
         if keep_track:
             v_track_arr = np.stack(v_track)[:, sl]
             pi_track_arr = np.stack(pi_track)[:, sl]
-            return v_track_arr, pi_track_arr, err
+            err_track_arr = np.array(err_track)
+            return v_track_arr, pi_track_arr, err_track_arr
 
         return new_v[sl], new_pi[sl], err
