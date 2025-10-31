@@ -1,3 +1,6 @@
+import numpy as np
+import numpy.testing as np_test
+
 from utils import GamblerPolicy
 
 
@@ -18,3 +21,8 @@ def test_initial_ptpm():
 
     assert ptpm[3, 2] == 0.8
     assert ptpm[3, 4] == 0.2
+
+
+def test_immediate_rewards():
+    gp = GamblerPolicy(goal=8, success_probability=0.2)
+    np_test.assert_array_equal(gp.immediate_rewards, np.array(8 * [0] + [1]).astype(float))

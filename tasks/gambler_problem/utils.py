@@ -11,6 +11,9 @@ class GamblerPolicy:
 
         self.policy_estimate = np.ones(self.n_nonterminal_states, dtype=int)
 
+        self.immediate_rewards = np.zeros(self.n_states)
+        self.immediate_rewards[-1] = 1
+
     def define_ptpm(self) -> npt.NDArray[np.floating]:
 
         # policy transition probability matrix: s -> s'
