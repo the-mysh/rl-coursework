@@ -39,22 +39,26 @@ class GamblerProblemModel:
         imr = self.immediate_rewards
 
         v = np.zeros(self.n_states)  # initial value 'function'
-        pi = np.zeros(self.n_states, dtype=int)
 
         for i in range(max_iter):
             comp = np.matvec(transition_probs, v + imr)
             new_v = np.max(comp, axis=0)
+            new_pi = np.argmax(comp, axis=0)
 
             if keep_track:
                 v_track.append(new_v)
-                pi_track.append(np.argmax(comp, axis=0))
+                pi_track.append(new_pi)
+
+            err = np.max(np.abs(v - new_v))
+            if err < convergence:
+                break
 
             v = new_v
 
         sl = slice(1, -1)
         if keep_track:
-            v_track = np.stack(v_track)[:, sl]
-            pi_track = np.stack(pi_track)[:, sl]
-            return v_track, pi_track
+            v_track_arr = np.stack(v_track)[:, sl]
+            pi_track_arr = np.stack(pi_track)[:, sl]
+            return v_track_arr, pi_track_arr, err
 
-        return v[sl], pi[sl]
+        return new_v[sl], new_pi[sl], err
