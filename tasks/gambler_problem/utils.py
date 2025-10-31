@@ -31,6 +31,11 @@ class GamblerProblemModel:
                 transition_probs[action_idx, state, state + action_value] = p_success
         return transition_probs
 
+    @staticmethod
+    def round_up(arr, precision):
+        factor = 10**precision
+        return np.round(np.ceil(arr * factor) / factor, precision)
+
     def run_value_iteration(self, convergence: float = 10e-4, max_iter: int = 1000, keep_track: bool = False):
         v_track = []
         pi_track = []
@@ -43,6 +48,7 @@ class GamblerProblemModel:
 
         for i in range(max_iter):
             comp = np.matvec(transition_probs, v + imr)
+            comp = self.round_up(comp, 4)
             new_v = np.max(comp, axis=0)
             new_pi = np.argmax(comp, axis=0)
             err = np.max(np.abs(v - new_v))
