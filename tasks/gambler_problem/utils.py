@@ -30,3 +30,31 @@ class GamblerProblemModel:
                 transition_probs[action_idx, state, state - action_value] = p_failure
                 transition_probs[action_idx, state, state + action_value] = p_success
         return transition_probs
+
+    def run_value_iteration(self, convergence: float = 10e-4, max_iter: int = 1000, keep_track: bool = False):
+        v_track = []
+        pi_track = []
+
+        transition_probs = self.define_transition_probability_matrices()
+        imr = self.immediate_rewards
+
+        v = np.zeros(self.n_states)  # initial value 'function'
+        pi = np.zeros(self.n_states, dtype=int)
+
+        for i in range(max_iter):
+            comp = np.matvec(transition_probs, v + imr)
+            new_v = np.max(comp, axis=0)
+
+            if keep_track:
+                v_track.append(new_v)
+                pi_track.append(np.argmax(comp, axis=0))
+
+            v = new_v
+
+        sl = slice(1, -1)
+        if keep_track:
+            v_track = np.stack(v_track)[:, sl]
+            pi_track = np.stack(pi_track)[:, sl]
+            return v_track, pi_track
+
+        return v[sl], pi[sl]
