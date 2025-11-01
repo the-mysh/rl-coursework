@@ -41,15 +41,15 @@ class GamblerProblemModel:
         factor = 10**precision
         return np.round(np.ceil(arr * factor) / factor, precision)
 
-    def _sweep_vectorised(self, v, transition_probs):
+    def _sweep_vectorised(self, v, transition_probs, precision: int = 4):
         comp = np.matvec(transition_probs, self.discount * v + self.immediate_rewards)
-        comp = self.round_up(comp, 4)
+        comp = self.round_up(comp, precision)
         new_v = np.max(comp, axis=0)
         new_pi = np.argmax(comp, axis=0) + 1  # bet value is best action index + 1 (0-based indexing; min bet is 1)
         err = np.max(np.abs(v - new_v))
         return new_v, new_pi, err
 
-    def _sweep_in_place(self, v, transition_probs):
+    def _sweep_in_place(self, v, transition_probs, precision: int = 4):
         discount = self.discount
         imr = self.immediate_rewards
 
@@ -66,7 +66,7 @@ class GamblerProblemModel:
                 if not p.sum():
                     continue  # this action is invalid for the current state
 
-                new_possible_state_value = self.round_up(p @ (imr + discount * v), 4)
+                new_possible_state_value = self.round_up(p @ (imr + discount * v), precision)
                 if new_possible_state_value > best_new_state_value:
                     best_action = action_idx + 1  # min action index is 0, corresponds to bet = 1
                     best_new_state_value = new_possible_state_value
@@ -81,7 +81,7 @@ class GamblerProblemModel:
         return v, pi, max_err
 
     def run_value_iteration(self, convergence: float = 10e-4, max_iter: int = 1000, keep_track: bool = False,
-                            approach: VIApproach = VIApproach.VECTORIZED):
+                            approach: VIApproach = VIApproach.VECTORIZED, precision: int = 4):
         v_track = []
         pi_track = []
         err_track = []
@@ -90,16 +90,16 @@ class GamblerProblemModel:
 
         match approach:
             case VIApproach.VECTORIZED:
-                sweep_func = lambda v_: self._sweep_vectorised(v_, transition_probs)
+                sweep_func = self._sweep_vectorised
             case VIApproach.IN_PLACE:
-                sweep_func = lambda v_: self._sweep_in_place(v_, transition_probs)
+                sweep_func = self._sweep_in_place
             case _:
                 raise ValueError(f'Invalid approach specified: {approach}')
 
         v = np.zeros(self.n_states)  # initial value 'function'
 
         for i in range(max_iter):
-            new_v, new_pi, err = sweep_func(v)
+            new_v, new_pi, err = sweep_func(v, transition_probs, precision=precision)
 
             if keep_track:
                 v_track.append(new_v)
