@@ -1,6 +1,9 @@
 import numpy as np
 import numpy.typing as npt
 from enum import Enum, auto
+import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator
+
 
 class VIApproach(Enum):
     VECTORIZED = auto()
@@ -119,3 +122,33 @@ class GamblerProblemModel:
             return v_track_arr, pi_track_arr, err_track_arr
 
         return new_v[sl], new_pi[sl], err
+
+
+def plot_value_iteration(vs, pis):
+    x = np.arange(pis.shape[1]) + 1
+    kw = dict(ls='--', marker='.', lw=1)
+
+    fig, axes = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
+    for ax in axes:
+        ax.grid(color='lightgrey')
+        ax.set_xlabel("State (capital)")
+
+    for idx in (0, 1, 2, -1):
+        axes[0].plot(
+            x,
+            vs[idx],
+            label=(f"{len(vs)} (final)" if idx==-1 else f"{idx+1}"),
+            **kw
+        )
+
+    axes[0].legend(title="Iteration", fancybox=True, framealpha=0.5)
+    axes[0].set_title("Value function - iteration results")
+    axes[0].set_ylabel("State value")
+
+    axes[1].plot(x, pis[-1], **kw)
+    axes[1].yaxis.set_major_locator(MultipleLocator(5))
+    axes[1].set_title("Optimal policy")
+    axes[1].set_ylabel("Policy (bet value)")
+
+    fig.subplots_adjust(hspace=0.3)
+
