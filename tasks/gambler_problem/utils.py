@@ -50,17 +50,13 @@ class GamblerProblemModel:
         return new_v, new_pi, err
 
     def _sweep_in_place(self, v, transition_probs):
-        goal = self.goal
         discount = self.discount
         imr = self.immediate_rewards
 
         pi = np.zeros(self.n_states, dtype=int)
         max_err = 0
 
-        for state in range(self.n_states):
-            if state == 0 or state == goal:
-                continue  # no transition possible from these states
-
+        for state in range(1, self.n_states-1):
             old_state_value = v[state]
             state_transition_probs = transition_probs[:, state, :]  # matrix: (<n_actions>, <n_states>)
 
