@@ -1,5 +1,10 @@
 import numpy as np
 import numpy.typing as npt
+from enum import Enum, auto
+
+class VIApproach(Enum):
+    VECTORIZED = auto()
+    IN_PLACE = auto()
 
 
 class GamblerProblemModel:
@@ -36,7 +41,7 @@ class GamblerProblemModel:
         factor = 10**precision
         return np.round(np.ceil(arr * factor) / factor, precision)
 
-    def _single_vi_vectorised(self, v, transition_probs):
+    def _sweep_vectorised(self, v, transition_probs):
         comp = np.matvec(transition_probs, self.discount * v + self.immediate_rewards)
         comp = self.round_up(comp, 4)
         new_v = np.max(comp, axis=0)
@@ -44,17 +49,62 @@ class GamblerProblemModel:
         err = np.max(np.abs(v - new_v))
         return new_v, new_pi, err
 
-    def run_value_iteration(self, convergence: float = 10e-4, max_iter: int = 1000, keep_track: bool = False):
+    def _sweep_in_place(self, v, transition_probs):
+        goal = self.goal
+        discount = self.discount
+        imr = self.immediate_rewards
+
+        pi = np.zeros(self.n_states, dtype=int)
+        max_err = 0
+
+        for state in range(self.n_states):
+            if state == 0 or state == goal:
+                continue  # no transition possible from these states
+
+            old_state_value = v[state]
+            state_transition_probs = transition_probs[:, state, :]  # matrix: (<n_actions>, <n_states>)
+
+            best_action = None
+            best_new_state_value = None
+            for action_idx in range(self.n_actions):
+                action_transition_probs = state_transition_probs[action_idx]  # vector: (<n_states>,)
+                if not action_transition_probs.sum():
+                    continue  # this action is invalid for the current state
+
+                new_possible_state_value = action_transition_probs @ (imr + discount * v)
+                if not action_idx or (best_new_state_value > new_possible_state_value):
+                    best_action = action_idx
+                    best_new_state_value = new_possible_state_value
+
+            if best_action is None or best_new_state_value is None:
+                raise RuntimeError(f"No valid action found for state {state}")
+
+            pi[state] = best_action
+            v[state] = best_new_state_value
+            max_err = max(max_err, np.abs(best_new_state_value-old_state_value))
+
+        return v, pi, max_err
+
+    def run_value_iteration(self, convergence: float = 10e-4, max_iter: int = 1000, keep_track: bool = False,
+                            approach: VIApproach = VIApproach.VECTORIZED):
         v_track = []
         pi_track = []
         err_track = []
 
         transition_probs = self.define_transition_probability_matrices()
 
+        match approach:
+            case VIApproach.VECTORIZED:
+                sweep_func = lambda v_: self._sweep_vectorised(v_, transition_probs)
+            case VIApproach.IN_PLACE:
+                sweep_func = lambda v_: self._sweep_in_place(v_, transition_probs)
+            case _:
+                raise ValueError(f'Invalid approach specified: {approach}')
+
         v = np.zeros(self.n_states)  # initial value 'function'
 
         for i in range(max_iter):
-            new_v, new_pi, err = self._single_vi_vectorised(v, transition_probs)
+            new_v, new_pi, err = sweep_func(v)
 
             if keep_track:
                 v_track.append(new_v)
