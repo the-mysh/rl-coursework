@@ -43,11 +43,12 @@ class GamblerProblemModel:
 
         transition_probs = self.define_transition_probability_matrices()
         imr = self.immediate_rewards
+        d = self.discount
 
         v = np.zeros(self.n_states)  # initial value 'function'
 
         for i in range(max_iter):
-            comp = np.matvec(transition_probs, v + imr)
+            comp = np.matvec(transition_probs, d * v + imr)
             comp = self.round_up(comp, 4)
             new_v = np.max(comp, axis=0)
             new_pi = np.argmax(comp, axis=0)
