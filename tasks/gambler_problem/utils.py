@@ -60,18 +60,18 @@ class GamblerProblemModel:
             old_state_value = v[state]
 
             best_action = None
-            best_new_state_value = None
+            best_new_state_value = -np.inf
             for action_idx in range(self.n_actions):
                 p = transition_probs[action_idx, state]  # vector: (<n_states>,)
                 if not p.sum():
                     continue  # this action is invalid for the current state
 
                 new_possible_state_value = self.round_up(p @ (imr + discount * v), 4)
-                if not action_idx or (new_possible_state_value > best_new_state_value):
+                if new_possible_state_value > best_new_state_value:
                     best_action = action_idx + 1  # min action index is 0, corresponds to bet = 1
                     best_new_state_value = new_possible_state_value
 
-            if best_action is None or best_new_state_value is None:
+            if best_action is None:
                 raise RuntimeError(f"No valid action found for state {state}")
 
             pi[state] = best_action
