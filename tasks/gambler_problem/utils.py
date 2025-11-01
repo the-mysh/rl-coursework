@@ -36,23 +36,25 @@ class GamblerProblemModel:
         factor = 10**precision
         return np.round(np.ceil(arr * factor) / factor, precision)
 
+    def _single_vi_vectorised(self, v, transition_probs):
+        comp = np.matvec(transition_probs, self.discount * v + self.immediate_rewards)
+        comp = self.round_up(comp, 4)
+        new_v = np.max(comp, axis=0)
+        new_pi = np.argmax(comp, axis=0)
+        err = np.max(np.abs(v - new_v))
+        return new_v, new_pi, err
+
     def run_value_iteration(self, convergence: float = 10e-4, max_iter: int = 1000, keep_track: bool = False):
         v_track = []
         pi_track = []
         err_track = []
 
         transition_probs = self.define_transition_probability_matrices()
-        imr = self.immediate_rewards
-        d = self.discount
 
         v = np.zeros(self.n_states)  # initial value 'function'
 
         for i in range(max_iter):
-            comp = np.matvec(transition_probs, d * v + imr)
-            comp = self.round_up(comp, 4)
-            new_v = np.max(comp, axis=0)
-            new_pi = np.argmax(comp, axis=0)
-            err = np.max(np.abs(v - new_v))
+            new_v, new_pi, err = self._single_vi_vectorised(v, transition_probs)
 
             if keep_track:
                 v_track.append(new_v)
