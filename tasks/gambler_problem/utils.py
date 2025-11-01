@@ -58,16 +58,15 @@ class GamblerProblemModel:
 
         for state in range(1, self.n_states-1):
             old_state_value = v[state]
-            state_transition_probs = transition_probs[:, state, :]  # matrix: (<n_actions>, <n_states>)
 
             best_action = None
             best_new_state_value = None
             for action_idx in range(self.n_actions):
-                action_transition_probs = state_transition_probs[action_idx]  # vector: (<n_states>,)
-                if not action_transition_probs.sum():
+                p = transition_probs[action_idx, state]  # vector: (<n_states>,)
+                if not p.sum():
                     continue  # this action is invalid for the current state
 
-                new_possible_state_value = action_transition_probs @ (imr + discount * v)
+                new_possible_state_value = p @ (imr + discount * v)
                 if not action_idx or (best_new_state_value > new_possible_state_value):
                     best_action = action_idx + 1  # min action index is 0, corresponds to bet = 1
                     best_new_state_value = new_possible_state_value
