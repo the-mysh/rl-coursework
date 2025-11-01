@@ -45,7 +45,7 @@ class GamblerProblemModel:
         comp = np.matvec(transition_probs, self.discount * v + self.immediate_rewards)
         comp = self.round_up(comp, 4)
         new_v = np.max(comp, axis=0)
-        new_pi = np.argmax(comp, axis=0)
+        new_pi = np.argmax(comp, axis=0) + 1  # bet value is best action index + 1 (0-based indexing; min bet is 1)
         err = np.max(np.abs(v - new_v))
         return new_v, new_pi, err
 
@@ -73,7 +73,7 @@ class GamblerProblemModel:
 
                 new_possible_state_value = action_transition_probs @ (imr + discount * v)
                 if not action_idx or (best_new_state_value > new_possible_state_value):
-                    best_action = action_idx
+                    best_action = action_idx + 1  # min action index is 0, corresponds to bet = 1
                     best_new_state_value = new_possible_state_value
 
             if best_action is None or best_new_state_value is None:
