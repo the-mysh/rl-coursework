@@ -66,7 +66,7 @@ class GamblerProblemModel:
                 if not p.sum():
                     continue  # this action is invalid for the current state
 
-                new_possible_state_value = p @ (imr + discount * v)
+                new_possible_state_value = self.round_up(p @ (imr + discount * v), 4)
                 if not action_idx or (best_new_state_value > new_possible_state_value):
                     best_action = action_idx + 1  # min action index is 0, corresponds to bet = 1
                     best_new_state_value = new_possible_state_value
