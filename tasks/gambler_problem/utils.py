@@ -138,6 +138,7 @@ def plot_value_iteration(vs, pis):
             x,
             vs[idx],
             label=(f"{len(vs)} (final)" if idx==-1 else f"{idx+1}"),
+            alpha=0.7,
             **kw
         )
 
@@ -151,4 +152,16 @@ def plot_value_iteration(vs, pis):
     axes[1].set_ylabel("Policy (bet value)")
 
     fig.subplots_adjust(hspace=0.3)
+
+
+def plot_policy_evolution(pis):
+    fig, axes = plt.subplots(2, 1, figsize=(12, 5))
+
+    im0 = axes[0].imshow(pis, cmap='jet', vmax=30)
+    fig.colorbar(im0, ax=axes[0])
+
+    pdiff = np.diff(pis, axis=0)
+    m = np.max(np.abs(pdiff)) // 2
+    im1 = axes[1].imshow(pdiff, cmap='coolwarm', vmin=-m, vmax=m)
+    fig.colorbar(im1, ax=axes[1])
 
