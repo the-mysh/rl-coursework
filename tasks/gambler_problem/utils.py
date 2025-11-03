@@ -39,14 +39,9 @@ class GamblerProblemModel:
                 transition_probs[action_idx, state, state + action_value] = p_success
         return transition_probs
 
-    @staticmethod
-    def round_up(arr, precision):
-        factor = 10**precision
-        return np.round(np.ceil(arr * factor) / factor, precision)
-
     def _sweep_vectorised(self, v, transition_probs, precision: int = 4):
         comp = np.matvec(transition_probs, self.discount * v + self.immediate_rewards)
-        comp = self.round_up(comp, precision)
+        comp = np.round(comp, precision)
         new_v = np.max(comp, axis=0)
         new_pi = np.argmax(comp, axis=0) + 1  # bet value is best action index + 1 (0-based indexing; min bet is 1)
         err = np.max(np.abs(v - new_v))
@@ -69,7 +64,7 @@ class GamblerProblemModel:
                 if not p.sum():
                     continue  # this action is invalid for the current state
 
-                new_possible_state_value = self.round_up(p @ (imr + discount * v), precision)
+                new_possible_state_value = np.round(p @ (imr + discount * v), precision)
                 if new_possible_state_value > best_new_state_value:
                     best_action = action_idx + 1  # min action index is 0, corresponds to bet = 1
                     best_new_state_value = new_possible_state_value
@@ -154,10 +149,10 @@ def plot_value_iteration(vs, pis):
     fig.subplots_adjust(hspace=0.3)
 
 
-def plot_policy_evolution(pis):
+def plot_policy_evolution(pis, vmax=None):
     fig, axes = plt.subplots(2, 1, figsize=(12, 5))
 
-    im0 = axes[0].imshow(pis, cmap='jet', vmax=30)
+    im0 = axes[0].imshow(pis, cmap='jet', vmax=vmax)
     fig.colorbar(im0, ax=axes[0])
 
     pdiff = np.diff(pis, axis=0)
