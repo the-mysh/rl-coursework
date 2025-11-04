@@ -147,16 +147,16 @@ def plot_value_iteration(vs, pis):
     fig.subplots_adjust(hspace=0.3)
 
 
-def plot_estimate_evolution(estimates, log_scale_diff: bool = False):
-    fig, axes = plt.subplots(3, 1, figsize=(12, 7))
+def plot_estimate_evolution(estimates, log_scale_diff: bool = False, cbar_shrink=0.8, fig_height=7):
+    fig, axes = plt.subplots(3, 1, figsize=(12, fig_height), layout='constrained', gridspec_kw={'height_ratios': [3, 3, 1]})
 
     im0 = axes[0].imshow(estimates, cmap='jet')
-    fig.colorbar(im0, ax=axes[0])
+    fig.colorbar(im0, ax=axes[0], shrink=cbar_shrink)
 
     diff = np.diff(estimates, axis=0)
     m = np.max(np.abs(diff)) // 2
     im1 = axes[1].imshow(diff, cmap='coolwarm', vmin=-m, vmax=m)
-    fig.colorbar(im1, ax=axes[1])
+    fig.colorbar(im1, ax=axes[1], shrink=cbar_shrink)
 
     max_diff = np.max(diff, axis=1)
     x = np.arange(len(max_diff)) + 1
