@@ -51,6 +51,8 @@ class GamblerProblemModel:
         discount = self.discount
         imr = self.immediate_rewards
 
+        v = v.copy()
+
         pi = np.zeros(self.n_states, dtype=int)
         max_err = 0
 
