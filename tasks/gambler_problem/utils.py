@@ -41,9 +41,9 @@ class GamblerProblemModel:
 
     def _sweep_vectorised(self, v, transition_probs, precision: int = 4):
         comp = np.matvec(transition_probs, self.discount * v + self.immediate_rewards)
-        comp = np.round(comp, precision)
+        comp = comp
         new_v = np.max(comp, axis=0)
-        new_pi = np.argmax(comp, axis=0) + 1  # bet value is best action index + 1 (0-based indexing; min bet is 1)
+        new_pi = np.argmax(np.round(comp, precision), axis=0) + 1  # bet value is best action index + 1 (0-based indexing; min bet is 1)
         err = np.max(np.abs(v - new_v))
         return new_v, new_pi, err
 
@@ -58,23 +58,21 @@ class GamblerProblemModel:
             old_state_value = v[state]
 
             best_action = None
-            best_new_state_value = -np.inf
-            for action_idx in range(self.n_actions):
+            best_q_value = -np.inf
+            for action_idx in range(min(self.n_actions, self.goal-state)):
                 p = transition_probs[action_idx, state]  # vector: (<n_states>,)
-                if not p.sum():
-                    continue  # this action is invalid for the current state
+                possible_q_value = p @ (imr + discount * v)
 
-                new_possible_state_value = np.round(p @ (imr + discount * v), precision)
-                if new_possible_state_value > best_new_state_value:
+                # round to specified precision only for extracting policy (determining best action for this state)
+                if (best_action is None) or (np.round(possible_q_value, precision) > np.round(best_q_value, precision)):
                     best_action = action_idx + 1  # min action index is 0, corresponds to bet = 1
-                    best_new_state_value = new_possible_state_value
 
-            if best_action is None:
-                raise RuntimeError(f"No valid action found for state {state}")
+                if possible_q_value > best_q_value:
+                    best_q_value = possible_q_value
 
             pi[state] = best_action
-            v[state] = best_new_state_value
-            max_err = max(max_err, np.abs(best_new_state_value-old_state_value))
+            v[state] = best_q_value
+            max_err = max(max_err, np.abs(best_q_value-old_state_value))
 
         return v, pi, max_err
 
