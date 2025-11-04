@@ -149,7 +149,7 @@ def plot_value_iteration(vs, pis):
     fig.subplots_adjust(hspace=0.3)
 
 
-def plot_estimate_evolution(estimates, label: str, log_scale_diff: bool = False, cbar_shrink=0.8, fig_height=7, equalise_diff: bool = False):
+def plot_estimate_evolution(estimates, label: str, log_scale_diff: bool = False, fig_height=7, equalise_diff: bool = False):
     fig, axes = plt.subplots(3, 1, figsize=(10, fig_height), layout='constrained', gridspec_kw={'height_ratios': [3, 3, 1]})
     n_estimates, n_states = estimates.shape
 
@@ -165,7 +165,7 @@ def plot_estimate_evolution(estimates, label: str, log_scale_diff: bool = False,
         vmin, vmax = -m, m
     else:
         vmin, vmax = None, None
-    im1 = axes[1].imshow(diff, cmap='coolwarm', vmin=vmin, vmax=vmax, extent=(0.5, n_states+0.5, n_estimates+0.5, 1.5))
+    im1 = axes[1].imshow(diff, cmap='coolwarm' if equalise_diff else 'YlOrRd', vmin=vmin, vmax=vmax, extent=(0.5, n_states+0.5, n_estimates+0.5, 1.5))
     fig.colorbar(im1, ax=axes[1], fraction=0.03, pad=0.04)
     axes[1].set_xlabel("State (capital, $)")
     axes[1].set_ylabel("Iteration")
