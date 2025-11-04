@@ -149,12 +149,15 @@ def plot_value_iteration(vs, pis):
     fig.subplots_adjust(hspace=0.3)
 
 
-def plot_estimate_evolution(estimates, log_scale_diff: bool = False, cbar_shrink=0.8, fig_height=7, equalise_diff: bool = False):
-    fig, axes = plt.subplots(3, 1, figsize=(12, fig_height), layout='constrained', gridspec_kw={'height_ratios': [3, 3, 1]})
+def plot_estimate_evolution(estimates, label: str, log_scale_diff: bool = False, cbar_shrink=0.8, fig_height=7, equalise_diff: bool = False):
+    fig, axes = plt.subplots(3, 1, figsize=(10, fig_height), layout='constrained', gridspec_kw={'height_ratios': [3, 3, 1]})
     n_estimates, n_states = estimates.shape
 
     im0 = axes[0].imshow(estimates, cmap='jet', extent=(0.5, n_states+0.5, n_estimates+0.5, 0.5))
-    fig.colorbar(im0, ax=axes[0], shrink=cbar_shrink)
+    fig.colorbar(im0, ax=axes[0], fraction=0.04, pad=0.04)
+    axes[0].set_xlabel("State (capital, $)")
+    axes[0].set_ylabel("Iteration")
+    axes[0].set_title(label)
 
     diff = np.diff(estimates, axis=0)
     if equalise_diff:
@@ -163,14 +166,21 @@ def plot_estimate_evolution(estimates, log_scale_diff: bool = False, cbar_shrink
     else:
         vmin, vmax = None, None
     im1 = axes[1].imshow(diff, cmap='coolwarm', vmin=vmin, vmax=vmax, extent=(0.5, n_states+0.5, n_estimates+0.5, 1.5))
-    fig.colorbar(im1, ax=axes[1], shrink=cbar_shrink)
+    fig.colorbar(im1, ax=axes[1], fraction=0.03, pad=0.04)
+    axes[1].set_xlabel("State (capital, $)")
+    axes[1].set_ylabel("Iteration")
+    axes[1].set_title(f"Difference over iterations")
 
     max_diff = np.max(diff, axis=1)
-    x = np.arange(len(max_diff)) + 1
+    x = np.arange(len(max_diff)) + 2
     axes[2].plot(x, max_diff, lw=1, marker='.')
     axes[2].grid(color='lightgrey')
 
     if log_scale_diff:
         axes[2].set_yscale('log')
+
+    axes[2].set_xlabel("Iteration")
+    axes[2].set_ylabel("Max error" + ("\n(log scale)" if log_scale_diff else ""))
+    axes[2].set_title(f"Maximum difference per iteration")
 
 
