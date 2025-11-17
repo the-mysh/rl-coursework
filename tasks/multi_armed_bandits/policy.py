@@ -7,8 +7,8 @@ from typing import Callable
 import numpy as np
 import numpy.typing as npt
 
-from rltoolbox.action import Action
-from rltoolbox.action_estimate import ActionEstimate
+from action import Action
+from action_estimate import ActionEstimate
 
 
 class Policy(ABC):

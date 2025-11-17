@@ -1,4 +1,4 @@
-from rltoolbox.action import Action
+from action import Action
 
 
 class ActionEstimate:

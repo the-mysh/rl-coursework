@@ -3,8 +3,8 @@ import logging
 import numpy as np
 import numpy.typing as npt
 
-from rltoolbox.action import Action
-from rltoolbox.policy import GreedyPolicy, EpsilonGreedyPolicy, UCBPolicy, Policy
+from action import Action
+from policy import GreedyPolicy, EpsilonGreedyPolicy, UCBPolicy, Policy
 
 
 logger = logging.getLogger(__name__)
