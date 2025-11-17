@@ -58,9 +58,19 @@ class CliffGame:
     def agent_pos(self):
         return self._agent_pos
 
+    @property
+    def agent_square(self):
+        return self._scene[*self.agent_pos]
+
+    def reset(self):
+        self._agent_pos = self.start_pos[:]
+
     def move(self, action: Action) -> tuple[int, bool]:
         if not isinstance(action, Action):
             raise TypeError(f"Expected an Action enum; got {type(action)}: {action}")
+
+        if self.agent_square is SquareType.CLIFF or self.agent_square is SquareType.GOAL:
+            raise RuntimeError("Game is over, reset to play again")
 
         agent_x, agent_y = self._agent_pos
         move_x, move_y = self.movement[action]
@@ -70,7 +80,7 @@ class CliffGame:
 
         self._agent_pos = self.bind_pos((agent_x, agent_y))
 
-        a = self._scene[*self.agent_pos]
+        a = self.agent_square
         if a is SquareType.CLIFF:
             return -100, True
         return -1, (a is SquareType.GOAL)
