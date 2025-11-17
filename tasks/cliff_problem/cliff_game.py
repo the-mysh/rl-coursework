@@ -70,10 +70,9 @@ class CliffGame:
 
     def bind_pos(self, pos: tuple[int, int]) -> tuple[int, int]:
         x, y = pos
-        if x < 0:
-            x = 0
-        if y < 0:
-            y = 0
+        sx, sy = self._scene.shape
+        x = min(max(x, 0), sx - 1)
+        y = min(max(y, 0), sy - 1)
         return x, y
 
     def translate_pos(self, pos: tuple[int, int]) -> tuple[int, int]:
