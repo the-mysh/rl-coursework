@@ -53,7 +53,7 @@ class Sarsa:
         self.q_values = np.zeros((*self.game.scene.shape, len(self.actions)))
         self.game.reset()
 
-    def run(self, verbose: bool = False):
+    def run(self, verbose: bool = False, dry: bool = False) -> tuple[float, bool]:
         state = State(*self.game.agent_pos)
         action: Action = self.choose_action(state)
         states_sequence = [state]
@@ -71,7 +71,8 @@ class Sarsa:
             new_state = State(*self.game.agent_pos)
             new_action = self.choose_action(new_state)
 
-            self.update_q_values(state, action, reward, new_state, new_action)
+            if not dry:
+                self.update_q_values(state, action, reward, new_state, new_action)
 
             state = new_state
             action = new_action
