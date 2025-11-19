@@ -1,6 +1,7 @@
 import numpy as np
 from random import random, choice
 from typing import NamedTuple
+import matplotlib.pyplot as plt
 
 from cliff_game import CliffGame, Action
 
@@ -52,7 +53,7 @@ class Sarsa:
         self.q_values = np.zeros((*self.game.scene.shape, len(self.actions)))
         self.game.reset()
 
-    def run(self):
+    def run(self, verbose: bool = False):
         state = State(*self.game.agent_pos)
         action: Action = self.choose_action(state)
         states_sequence = [state]
@@ -61,7 +62,8 @@ class Sarsa:
         game_over = False
         total_reward = 0
         while not game_over:
-            print('+', end='')
+            if verbose:
+                print('+', end='')
             actions_sequence.append(action)
 
             reward, game_over = self.take_action(action)
@@ -76,4 +78,18 @@ class Sarsa:
             states_sequence.append(state)
 
         return states_sequence, actions_sequence, total_reward
+
+    def plot_q_values(self):
+        vmin = self.q_values.min()
+        vmax = self.q_values.max()
+
+        fig, axes = plt.subplots(2, 2, figsize=(12, 6))
+        for i, action in enumerate(self.actions):
+            ax = axes[i // 2, i % 2]
+            im = ax.imshow(self.q_values[:, :, i], vmin=vmin, vmax=vmax, cmap='viridis')
+            ax.set_title(action.name)
+
+        fig.subplots_adjust(right=0.8)
+        cbar_ax = fig.add_axes([0.83, 0.15, 0.02, 0.7])
+        fig.colorbar(im, cax=cbar_ax)
 
