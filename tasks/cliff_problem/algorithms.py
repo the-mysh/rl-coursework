@@ -33,8 +33,8 @@ class Sarsa:
         idx = self.get_q_idx_for_state_and_action(new_state, new_action)
         return reward + self.gamma * self.q_values[idx]
 
-    def choose_action(self, state: State) -> Action:
-        if random() < self.epsilon:
+    def choose_action(self, state: State, explore: bool = True) -> Action:
+        if explore and random() < self.epsilon:
             return choice(self.actions)
 
         action_q_values = self.q_values[*state, :]
@@ -53,15 +53,18 @@ class Sarsa:
         self.q_values = np.zeros((*self.game.scene.shape, len(self.actions)))
         self.game.reset()
 
-    def run(self, verbose: bool = False, dry: bool = False) -> tuple[float, bool]:
+    def run(self, verbose: bool = False, dry: bool = False, max_steps=1000) -> tuple[float, bool]:
         state = State(*self.game.agent_pos)
-        action: Action = self.choose_action(state)
+        action: Action = self.choose_action(state, explore=not dry)
         states_sequence = [state]
         actions_sequence = []
 
         game_over = False
         total_reward = 0
+        steps = 0
         while not game_over:
+            if steps > max_steps:
+                break
             if verbose:
                 print('+', end='')
             actions_sequence.append(action)
@@ -69,7 +72,7 @@ class Sarsa:
             reward, game_over = self.take_action(action)
             total_reward += reward
             new_state = State(*self.game.agent_pos)
-            new_action = self.choose_action(new_state)
+            new_action = self.choose_action(new_state, explore=not dry)
 
             if not dry:
                 self.update_q_values(state, action, reward, new_state, new_action)
@@ -77,6 +80,7 @@ class Sarsa:
             state = new_state
             action = new_action
             states_sequence.append(state)
+            steps += 1
 
         return states_sequence, actions_sequence, total_reward
 
