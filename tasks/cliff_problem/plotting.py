@@ -80,7 +80,7 @@ def plot_rewards(rewards: dict[str, list[int]], colors: dict[str, str] | None = 
     fig, ax  = plt.subplots(figsize=(10, 5))
 
     for algorithm, reward_trace in rewards.items():
-        ax.plot(np.arange(len(reward_trace)) + 1, reward_trace, label=algorithm, c=colors.get(algorithm))
+        ax.plot(np.arange(len(reward_trace)) + 1, reward_trace, label=algorithm, c=colors.get(algorithm), lw=1.5)
         ax.set_xlabel("Episode")
         ax.set_ylabel("Total reward")
 

@@ -3,6 +3,7 @@ import numpy.typing as npt
 from random import random, choice
 from typing import NamedTuple
 from abc import abstractmethod, ABC
+from tqdm.auto import tqdm
 
 from cliff_game import CliffGame, Action
 from plotting import plot_q_values, plot_policy
@@ -66,7 +67,7 @@ class Algorithm(ABC):
         combined_rewards = None
         combined_q_values = None
 
-        for i in range(n_runs):
+        for i in tqdm(range(n_runs)):
             self.reset()
             rewards = self.run(n_episodes, **kwargs)
 
