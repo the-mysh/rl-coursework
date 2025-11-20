@@ -100,7 +100,7 @@ class Sarsa:
     def plot_q_values(self):
         plot_q_values(self.q_values, self.actions, title=f"{self._name} Q-values")
 
-    def plot_current_policy(self, trajectory: list[State] | None = None, color='navy'):
+    def plot_current_policy(self, trajectory: list[State] | None = None, **kwargs):
         x_components = []
         y_components = []
 
@@ -122,4 +122,4 @@ class Sarsa:
             self.game.reset()
             trajectory, _, _ = self.run(dry=True)
 
-        plot_policy(u, v, trajectory, color=color, title=f"{self._name} computed policy")
+        plot_policy(u, v, trajectory, title=f"{self._name} computed policy", **kwargs)
