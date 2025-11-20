@@ -57,7 +57,8 @@ class Sarsa:
         self.q_values = np.zeros((*self.game.scene.shape, len(self.actions)))
         self.game.reset()
 
-    def run(self, verbose: bool = False, dry: bool = False, max_steps=1000) -> tuple[list[State], list[Action], int]:
+    def run(self, verbose: bool = False, dry: bool = False, max_steps=1000, keep_trajectory: bool = False
+            ) -> tuple[list[State], list[Action], int]:
         state = State(*self.game.agent_pos)
         action: Action = self.choose_action(state, explore=not dry)
         states_sequence = [state]
@@ -71,7 +72,9 @@ class Sarsa:
                 break
             if verbose:
                 print('+', end='')
-            actions_sequence.append(action)
+
+            if keep_trajectory:
+                actions_sequence.append(action)
 
             reward, game_over = self.take_action(action)
             total_reward += reward
@@ -83,7 +86,8 @@ class Sarsa:
 
             state = new_state
             action = new_action
-            states_sequence.append(state)
+            if keep_trajectory:
+                states_sequence.append(state)
             steps += 1
 
         return states_sequence, actions_sequence, total_reward
@@ -120,6 +124,6 @@ class Sarsa:
 
         if trajectory is None:
             self.game.reset()
-            trajectory, _, _ = self.run(dry=True)
+            trajectory, _, _ = self.run(dry=True, keep_trajectory=True)
 
         plot_policy(u, v, trajectory, title=f"{self._name} computed policy", **kwargs)
