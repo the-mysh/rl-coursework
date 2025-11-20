@@ -62,6 +62,27 @@ class Algorithm(ABC):
 
         return rewards
 
+    def run_multiple(self, n_episodes: int, n_runs: int, **kwargs):
+        combined_rewards = None
+        combined_q_values = None
+
+        for i in range(n_runs):
+            self.reset()
+            rewards = self.run(n_episodes, **kwargs)
+
+            combined_rewards = self.average_runs(combined_rewards, np.array(rewards), i+1)
+            combined_q_values = self.average_runs(combined_q_values, self.q_values[:], i+1)
+
+        self.q_values = combined_q_values
+        return combined_rewards
+
+    @staticmethod
+    def average_runs(old: npt.NDArray | None, new: npt.NDArray, idx: int):
+        if old is None:
+            return new
+
+        return old + (new - old) / idx
+
     def get_current_policy(self) -> tuple[npt.NDArray[np.integer], npt.NDArray[Action], npt.NDArray[np.bool_]]:
         policy_idx = np.argmax(self.q_values, axis=-1)
         terminal = ~np.any(self.q_values, axis=-1)
@@ -74,7 +95,7 @@ class Algorithm(ABC):
     def plot_q_values(self):
         plot_q_values(self.q_values, self.actions, title=f"{self._name} Q-values")
 
-    def plot_current_policy(self, trajectory: list[State] | None = None, **kwargs):
+    def plot_current_policy(self, trajectory: list[State] | None = None, max_steps: int = 1000, **kwargs):
         x_components = []
         y_components = []
 
@@ -94,7 +115,7 @@ class Algorithm(ABC):
 
         if trajectory is None:
             self.game.reset()
-            trajectory, _, _ = self.run_episode(dry=True, keep_trajectory=True)
+            trajectory, _, _ = self.run_episode(dry=True, keep_trajectory=True, max_steps=max_steps)
 
         plot_policy(u, v, trajectory, title=f"{self._name} computed policy", **kwargs)
 
