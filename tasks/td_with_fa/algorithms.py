@@ -61,7 +61,7 @@ class Sarsa(Algorithm):
     def run(self, w_init: npt.NDArray[np.floating], n_steps: int, keep_trajectory: bool = False
             ) -> tuple[npt.NDArray[np.floating], list[Problem.State], list[Problem.Action]]:
 
-        w = w_init[:]
+        w = w_init.copy()
         state = np.random.choice(self.problem.STATES)
         action = self.choose_action()
         states_sequence = [state]
@@ -75,14 +75,45 @@ class Sarsa(Algorithm):
             new_state = self.problem.take_action(state, action)
             new_action = self.choose_action()
 
-            phi_st = self.phi[state.value, action.value]
-            phi_new_st = self.phi[new_state.value, new_action.value]
-            estimate = phi_st @ w
-            target = self.reward + self.gamma * phi_new_st @ w
-            w += self.alpha * phi_st * (target - estimate)
+            phi_sa = self.phi[state.value, action.value]
+            phi_new_sa = self.phi[new_state.value, new_action.value]
+            estimate = phi_sa @ w
+            target = self.reward + self.gamma * phi_new_sa @ w
+            w += self.alpha * phi_sa * (target - estimate)
 
             state = new_state
             action = new_action
+            if keep_trajectory:
+                states_sequence.append(state)
+            w_norms.append(np.linalg.norm(w))
+
+        return np.array(w_norms), states_sequence, actions_sequence
+
+
+class QLearning(Algorithm):
+    def run(self, w_init: npt.NDArray[np.floating], n_steps: int, keep_trajectory: bool = False
+            ) -> tuple[npt.NDArray[np.floating], list[Problem.State], list[Problem.Action]]:
+
+        w = w_init.copy()
+        state = np.random.choice(self.problem.STATES)
+        states_sequence = [state]
+        actions_sequence = []
+        w_norms = [np.linalg.norm(w)]
+
+        for _ in range(n_steps):
+
+            action = self.choose_action()
+            if keep_trajectory:
+                actions_sequence.append(action)
+            new_state = self.problem.take_action(state, action)
+
+            phi_sa = self.phi[state.value, action.value]
+            phi_new_s = self.phi[new_state.value]
+            estimate = phi_sa @ w
+            target = self.reward + self.gamma * (phi_new_s @ w).max()
+            w += self.alpha * phi_sa * (target - estimate)
+
+            state = new_state
             if keep_trajectory:
                 states_sequence.append(state)
             w_norms.append(np.linalg.norm(w))
