@@ -72,7 +72,8 @@ def plot_policy(u: npt.NDArray[np.floating], v: npt.NDArray[np.floating], trajec
 
 
 @use_style
-def plot_rewards(rewards: dict[str, list[int]], colors: dict[str, str] | None = None, title: str = ""):
+def plot_rewards(rewards: dict[str, list[int]], colors: dict[str, str] | None = None, optimal: int | None = None,
+                 title: str = ""):
     if colors is None:
         colors = defaultdict(None)
 
@@ -83,6 +84,9 @@ def plot_rewards(rewards: dict[str, list[int]], colors: dict[str, str] | None = 
         ax.set_xlabel("Episode")
         ax.set_ylabel("Total reward")
 
-        ax.legend(title="Algorithm", fancybox=True, framealpha=0.5, frameon=True)
+    if optimal is not None:
+        ax.axhline(optimal, color='k', linestyle='--', lw=1, label='Optimal case')
+
+    ax.legend(title="Algorithm" if optimal is None else "", fancybox=True, framealpha=0.5, frameon=True)
 
     fig.suptitle(title)
