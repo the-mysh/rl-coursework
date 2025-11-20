@@ -2,9 +2,10 @@ import numpy as np
 import numpy.typing as npt
 from random import random, choice
 from typing import NamedTuple
-import matplotlib.pyplot as plt
+
 
 from cliff_game import CliffGame, Action
+from plotting import plot_q_values, plot_policy
 
 
 class State(NamedTuple):
@@ -95,18 +96,7 @@ class Sarsa:
         return policy_idx, policy_actions, terminal
 
     def plot_q_values(self):
-        vmin = self.q_values.min()
-        vmax = self.q_values.max()
-
-        fig, axes = plt.subplots(2, 2, figsize=(12, 6))
-        for i, action in enumerate(self.actions):
-            ax = axes[i // 2, i % 2]
-            im = ax.imshow(self.q_values[:, :, i], vmin=vmin, vmax=vmax, cmap='viridis')
-            ax.set_title(action.name)
-
-        fig.subplots_adjust(right=0.8)
-        cbar_ax = fig.add_axes([0.83, 0.15, 0.02, 0.7])
-        fig.colorbar(im, cax=cbar_ax)
+        plot_q_values(self.q_values, self.actions)
 
     def plot_current_policy(self, trajectory: list[State] | None = None, color='navy'):
         x_components = []
@@ -129,33 +119,5 @@ class Sarsa:
         if trajectory is None:
             self.game.reset()
             trajectory, _, _ = self.run(dry=True)
-        y_coords, x_coords = list(zip(*trajectory))
 
-        with plt.style.context('seaborn-v0_8-darkgrid'):
-            fig, axes = plt.subplots(2, 1, sharex='all', sharey='all', figsize=(10, 6))
-
-            for ax in axes:
-                ax.yaxis.set_inverted(True)
-                ax.set_aspect('equal')
-                ax.set_xticks(np.arange(policy_idx.shape[1] + 1) - 0.5)
-                ax.set_yticks(np.arange(policy_idx.shape[0]) - 0.5)
-                ax.set_xticklabels([])
-                ax.set_yticklabels([])
-                ax.set_xlim(-0.5, policy_idx.shape[1] - 0.5)
-                ax.set_ylim(policy_idx.shape[0] - 0.5, -0.5)
-                ax.tick_params(axis='both', which='major', length=0)
-
-            axes[0].quiver(u, v, pivot='mid', color=color)
-            axes[0].set_title("Policy")
-
-            axes[1].plot(x_coords, y_coords, marker='o', lw=0.5, color=color, alpha=0.5)
-
-            mkw = dict(lw=0, markerfacecolor='none', markeredgecolor=color, markersize=10, zorder=0)
-            axes[1].plot([x_coords[0]], [y_coords[0]], marker='D', **mkw, label="Start")
-            axes[1].plot([x_coords[-1]], [y_coords[-1]], marker='s', **mkw, label="Finish")
-            axes[1].legend(frameon=True, framealpha=0.5, fancybox=True)
-
-            axes[1].set_title("Greedy trajectory")
-
-            fig.suptitle("SARSA results")
-
+        plot_policy(u, v, trajectory, color=color)
