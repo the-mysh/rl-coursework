@@ -2,7 +2,7 @@ import numpy as np
 import numpy.typing as npt
 from random import random, choice
 from typing import NamedTuple
-
+from abc import abstractmethod, ABC
 
 from cliff_game import CliffGame, Action
 from plotting import plot_q_values, plot_policy
@@ -13,8 +13,8 @@ class State(NamedTuple):
     y: int
 
 
-class Sarsa:
-    _name = "SARSA"
+class Algorithm(ABC):
+    _name: str = NotImplemented
 
     def __init__(self, game: CliffGame, alpha=0.5, gamma=1., epsilon=0.15):
         self.game = game
@@ -26,16 +26,6 @@ class Sarsa:
 
     def get_q_idx_for_state_and_action(self, state: State, action: Action):
         return *state, self.actions.index(action)
-
-    def update_q_values(self, state: State, action: Action, reward: int, new_state: State, new_action: Action):
-        idx = self.get_q_idx_for_state_and_action(state, action)
-
-        update = self.alpha * (self.compute_target(reward, new_state, new_action) - self.q_values[idx])
-        self.q_values[idx] += update
-
-    def compute_target(self, reward: int, new_state: State, new_action: Action) -> float:
-        idx = self.get_q_idx_for_state_and_action(new_state, new_action)
-        return reward + self.gamma * self.q_values[idx]
 
     def choose_action(self, state: State, explore: bool = True) -> Action:
         if explore and random() < self.epsilon:
@@ -57,40 +47,20 @@ class Sarsa:
         self.q_values = np.zeros((*self.game.scene.shape, len(self.actions)))
         self.game.reset()
 
-    def run(self, verbose: bool = False, dry: bool = False, max_steps=1000, keep_trajectory: bool = False
-            ) -> tuple[list[State], list[Action], int]:
-        state = State(*self.game.agent_pos)
-        action: Action = self.choose_action(state, explore=not dry)
-        states_sequence = [state]
-        actions_sequence = []
+    @abstractmethod
+    def run_episode(self, dry: bool = False, max_steps: int = 1000, keep_trajectory: bool = False
+                    ) -> tuple[list[State], list[Action], int]:
+        pass
 
-        game_over = False
-        total_reward = 0
-        steps = 0
-        while not game_over:
-            if steps > max_steps:
-                break
-            if verbose:
-                print('+', end='')
+    def run(self, n_episodes: int, **kwargs):
+        rewards = []
 
-            if keep_trajectory:
-                actions_sequence.append(action)
+        for i in range(n_episodes):
+            self.game.reset()
+            _, _, r = self.run_episode(**kwargs)
+            rewards.append(r)
 
-            reward, game_over = self.take_action(action)
-            total_reward += reward
-            new_state = State(*self.game.agent_pos)
-            new_action = self.choose_action(new_state, explore=not dry)
-
-            if not dry:
-                self.update_q_values(state, action, reward, new_state, new_action)
-
-            state = new_state
-            action = new_action
-            if keep_trajectory:
-                states_sequence.append(state)
-            steps += 1
-
-        return states_sequence, actions_sequence, total_reward
+        return rewards
 
     def get_current_policy(self) -> tuple[npt.NDArray[np.integer], npt.NDArray[Action], npt.NDArray[np.bool_]]:
         policy_idx = np.argmax(self.q_values, axis=-1)
@@ -124,6 +94,101 @@ class Sarsa:
 
         if trajectory is None:
             self.game.reset()
-            trajectory, _, _ = self.run(dry=True, keep_trajectory=True)
+            trajectory, _, _ = self.run_episode(dry=True, keep_trajectory=True)
 
         plot_policy(u, v, trajectory, title=f"{self._name} computed policy", **kwargs)
+
+
+class Sarsa(Algorithm):
+    _name = 'SARSA'
+
+    def run_episode(self, dry: bool = False, max_steps=1000, keep_trajectory: bool = False
+                    ) -> tuple[list[State], list[Action], int]:
+        state = State(*self.game.agent_pos)
+        action: Action = self.choose_action(state, explore=not dry)
+        states_sequence = [state]
+        actions_sequence = []
+
+        game_over = False
+        total_reward = 0
+        steps = 0
+        while not game_over:
+            if steps > max_steps:
+                break
+
+            if keep_trajectory:
+                actions_sequence.append(action)
+
+            reward, game_over = self.take_action(action)
+            total_reward += reward
+            new_state = State(*self.game.agent_pos)
+            new_action = self.choose_action(new_state, explore=not dry)
+
+            if not dry:
+                self.update_q_values(state, action, reward, new_state, new_action)
+
+            state = new_state
+            action = new_action
+            if keep_trajectory:
+                states_sequence.append(state)
+            steps += 1
+
+        return states_sequence, actions_sequence, total_reward
+
+    def update_q_values(self, state: State, action: Action, reward: int, new_state: State, new_action: Action):
+        idx = self.get_q_idx_for_state_and_action(state, action)
+
+        update = self.alpha * (self.compute_target(reward, new_state, new_action) - self.q_values[idx])
+        self.q_values[idx] += update
+
+    def compute_target(self, reward: int, new_state: State, new_action: Action) -> float:
+        idx = self.get_q_idx_for_state_and_action(new_state, new_action)
+        return reward + self.gamma * self.q_values[idx]
+
+
+class QLearning(Algorithm):
+    _name = 'Q-Learning'
+
+    def run_episode(self, dry: bool = False, max_steps=1000, keep_trajectory: bool = False
+                    ) -> tuple[list[State], list[Action], int]:
+
+        state = State(*self.game.agent_pos)
+        states_sequence = [state]
+        actions_sequence = []
+
+        game_over = False
+        total_reward = 0
+        steps = 0
+        while not game_over:
+            if steps > max_steps:
+                break
+
+            action = self.choose_action(state, explore=not dry)
+
+            if keep_trajectory:
+                actions_sequence.append(action)
+
+            reward, game_over = self.take_action(action)
+            total_reward += reward
+            new_state = State(*self.game.agent_pos)
+
+            if not dry:
+                self.update_q_values(state, action, reward, new_state)
+
+            state = new_state
+            if keep_trajectory:
+                states_sequence.append(state)
+            steps += 1
+
+        return states_sequence, actions_sequence, total_reward
+
+    def update_q_values(self, state: State, action: Action, reward: int, new_state: State):
+        idx = self.get_q_idx_for_state_and_action(state, action)
+
+        update = self.alpha * (self.compute_target(reward, new_state) - self.q_values[idx])
+        self.q_values[idx] += update
+
+    def compute_target(self, reward: int, new_state: State) -> float:
+
+        best_q = self.q_values[*new_state].max()
+        return reward + self.gamma * best_q
