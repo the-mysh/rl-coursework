@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.typing as npt
 from random import random, choice
 from typing import NamedTuple
 import matplotlib.pyplot as plt
@@ -84,6 +85,15 @@ class Sarsa:
 
         return states_sequence, actions_sequence, total_reward
 
+    def get_current_policy(self) -> tuple[npt.NDArray[np.integer], npt.NDArray[Action], npt.NDArray[np.bool_]]:
+        policy_idx = np.argmax(self.q_values, axis=-1)
+        terminal = ~np.any(self.q_values, axis=-1)
+
+        policy_actions = np.array(self.actions)[policy_idx]
+        policy_actions[terminal] = ""
+
+        return policy_idx, policy_actions, terminal
+
     def plot_q_values(self):
         vmin = self.q_values.min()
         vmax = self.q_values.max()
@@ -97,4 +107,52 @@ class Sarsa:
         fig.subplots_adjust(right=0.8)
         cbar_ax = fig.add_axes([0.83, 0.15, 0.02, 0.7])
         fig.colorbar(im, cax=cbar_ax)
+
+    def plot_current_policy(self, trajectory: list[State], color='navy'):
+        x_components = []
+        y_components = []
+
+        for action in self.actions:
+            y_change, x_change = self.game.movement[action]
+            x_components.append(x_change)
+            y_components.append(y_change)
+
+        policy_idx, _, terminal = self.get_current_policy()
+
+        u = np.array(x_components).astype(float)[policy_idx]
+        v = np.array(y_components).astype(float)[policy_idx]
+        v = -v  # y-axis is inverted; going up in numbers is going down in the image
+
+        u[terminal] = np.nan
+        v[terminal] = np.nan
+
+        y_coords, x_coords = list(zip(*trajectory))
+
+        with plt.style.context('seaborn-v0_8-darkgrid'):
+            fig, axes = plt.subplots(2, 1, sharex='all', sharey='all', figsize=(10, 6))
+
+            for ax in axes:
+                ax.yaxis.set_inverted(True)
+                ax.set_aspect('equal')
+                ax.set_xticks(np.arange(policy_idx.shape[1] + 1) - 0.5)
+                ax.set_yticks(np.arange(policy_idx.shape[0]) - 0.5)
+                ax.set_xticklabels([])
+                ax.set_yticklabels([])
+                ax.set_xlim(-0.5, policy_idx.shape[1] - 0.5)
+                ax.set_ylim(policy_idx.shape[0] - 0.5, -0.5)
+                ax.tick_params(axis='both', which='major', length=0)
+
+            axes[0].quiver(u, v, pivot='mid', color=color)
+            axes[0].set_title("Policy")
+
+            axes[1].plot(x_coords, y_coords, marker='o', lw=0.5, color=color, alpha=0.5)
+
+            mkw = dict(lw=0, markerfacecolor='none', markeredgecolor=color, markersize=10, zorder=0)
+            axes[1].plot([x_coords[0]], [y_coords[0]], marker='D', **mkw, label="Start")
+            axes[1].plot([x_coords[-1]], [y_coords[-1]], marker='s', **mkw, label="Finish")
+            axes[1].legend(frameon=True, framealpha=0.5, fancybox=True)
+
+            axes[1].set_title("Greedy trajectory")
+
+            fig.suptitle("SARSA results")
 
