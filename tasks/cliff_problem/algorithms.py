@@ -54,7 +54,7 @@ class Sarsa:
         self.q_values = np.zeros((*self.game.scene.shape, len(self.actions)))
         self.game.reset()
 
-    def run(self, verbose: bool = False, dry: bool = False, max_steps=1000) -> tuple[float, bool]:
+    def run(self, verbose: bool = False, dry: bool = False, max_steps=1000) -> tuple[list[State], list[Action], int]:
         state = State(*self.game.agent_pos)
         action: Action = self.choose_action(state, explore=not dry)
         states_sequence = [state]
@@ -108,7 +108,7 @@ class Sarsa:
         cbar_ax = fig.add_axes([0.83, 0.15, 0.02, 0.7])
         fig.colorbar(im, cax=cbar_ax)
 
-    def plot_current_policy(self, trajectory: list[State], color='navy'):
+    def plot_current_policy(self, trajectory: list[State] | None = None, color='navy'):
         x_components = []
         y_components = []
 
@@ -126,6 +126,9 @@ class Sarsa:
         u[terminal] = np.nan
         v[terminal] = np.nan
 
+        if trajectory is None:
+            self.game.reset()
+            trajectory, _, _ = self.run(dry=True)
         y_coords, x_coords = list(zip(*trajectory))
 
         with plt.style.context('seaborn-v0_8-darkgrid'):
