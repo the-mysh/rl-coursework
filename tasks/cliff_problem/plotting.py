@@ -13,7 +13,7 @@ def use_style(func):
     return wrapper
 
 
-def plot_q_values(q_values: np.ndarray, actions: list[Action]):
+def plot_q_values(q_values: np.ndarray, actions: list[Action], title: str = ""):
     if q_values.ndim != 3:
         raise ValueError(f"Expected a 3D numpy array; got dimensions: {q_values.shape}")
 
@@ -29,11 +29,13 @@ def plot_q_values(q_values: np.ndarray, actions: list[Action]):
     fig.subplots_adjust(right=0.8)
     cbar_ax = fig.add_axes([0.83, 0.15, 0.02, 0.7])
     fig.colorbar(im, cax=cbar_ax)
+    fig.suptitle(title)
     return fig
 
 
 @use_style
-def plot_policy(u: npt.NDArray[np.floating], v: npt.NDArray[np.floating], trajectory: list[tuple[int, int]], color='navy'):
+def plot_policy(u: npt.NDArray[np.floating], v: npt.NDArray[np.floating], trajectory: list[tuple[int, int]],
+                color='navy', title: str = ""):
     fig, axes = plt.subplots(2, 1, sharex='all', sharey='all', figsize=(10, 6))
 
     ny, nx = u.shape
@@ -62,4 +64,4 @@ def plot_policy(u: npt.NDArray[np.floating], v: npt.NDArray[np.floating], trajec
 
     axes[1].set_title("Greedy trajectory")
 
-    fig.suptitle("SARSA results")
+    fig.suptitle(title)

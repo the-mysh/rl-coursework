@@ -14,6 +14,8 @@ class State(NamedTuple):
 
 
 class Sarsa:
+    _name = "SARSA"
+
     def __init__(self, game: CliffGame, alpha=0.5, gamma=1., epsilon=0.15):
         self.game = game
         self.actions = list(Action.__members__.values())
@@ -96,7 +98,7 @@ class Sarsa:
         return policy_idx, policy_actions, terminal
 
     def plot_q_values(self):
-        plot_q_values(self.q_values, self.actions)
+        plot_q_values(self.q_values, self.actions, title=f"{self._name} Q-values")
 
     def plot_current_policy(self, trajectory: list[State] | None = None, color='navy'):
         x_components = []
@@ -120,4 +122,4 @@ class Sarsa:
             self.game.reset()
             trajectory, _, _ = self.run(dry=True)
 
-        plot_policy(u, v, trajectory, color=color)
+        plot_policy(u, v, trajectory, color=color, title=f"{self._name} computed policy")
