@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from random import random
 import numpy as np
 import numpy.typing as npt
+from tqdm.auto import tqdm
 
 from problem import Problem
 
@@ -37,13 +38,29 @@ class Algorithm(ABC):
             return Problem.Action.B
 
     @abstractmethod
-    def run(self, w_init, n_steps: int):
+    def run(self, w_init: npt.NDArray[np.floating], n_steps: int
+            ) -> tuple[npt.NDArray[np.floating], list[Problem.State], list[Problem.Action]]:
         pass
+
+    def run_multiple(self, w_init: npt.NDArray[np.floating], n_steps: int, n_runs: int):
+        w_norms_combined = None
+        for i in tqdm(range(n_runs)):
+            w_norms, _, _ = self.run(w_init, n_steps)
+            w_norms_combined = self.average_runs(w_norms_combined, w_norms, i+1)
+        return w_norms_combined
+
+    @staticmethod
+    def average_runs(old: npt.NDArray | None, new: npt.NDArray, idx: int):
+        if old is None:
+            return new
+
+        return old + (new - old) / idx
 
 
 class Sarsa(Algorithm):
     def run(self, w_init: npt.NDArray[np.floating], n_steps: int, keep_trajectory: bool = False
             ) -> tuple[npt.NDArray[np.floating], list[Problem.State], list[Problem.Action]]:
+
         w = w_init[:]
         state = np.random.choice(self.problem.STATES)
         action = self.choose_action()
@@ -51,7 +68,7 @@ class Sarsa(Algorithm):
         actions_sequence = []
         w_norms = [np.linalg.norm(w)]
 
-        for _ in range(20):
+        for _ in range(n_steps):
             if keep_trajectory:
                 actions_sequence.append(action)
 
