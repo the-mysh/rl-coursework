@@ -2,12 +2,11 @@ from enum import Enum
 import numpy as np
 
 
-class Action(Enum):
-    A = 0
-    B = 1
-
-
 class Problem:
+    class Action(Enum):
+        A = 0
+        B = 1
+
     class State(Enum):
         S1 = 0
         S2 = 1
@@ -29,11 +28,11 @@ class Problem:
 
     @property
     def transition_probs_a(self):
-        return self._transition_probs[Action.A.value]
+        return self._transition_probs[self.Action.A.value]
 
     @property
     def transition_probs_b(self):
-        return self._transition_probs[Action.B.value]
+        return self._transition_probs[self.Action.B.value]
 
     @classmethod
     def define_transition_probabilities(cls):

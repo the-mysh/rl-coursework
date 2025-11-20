@@ -3,7 +3,7 @@ from random import random
 import numpy as np
 import numpy.typing as npt
 
-from problem import Action, Problem
+from problem import Problem
 
 
 
@@ -32,9 +32,9 @@ class Algorithm(ABC):
     @classmethod
     def choose_action(cls):
         if 7 * random() < 1:
-            return Action.A
+            return Problem.Action.A
         else:
-            return Action.B
+            return Problem.Action.B
 
     @abstractmethod
     def run(self, w_init, n_steps: int):
@@ -42,7 +42,8 @@ class Algorithm(ABC):
 
 
 class Sarsa(Algorithm):
-    def run(self, w_init: npt.NDArray[np.floating], n_steps: int):
+    def run(self, w_init: npt.NDArray[np.floating], n_steps: int, keep_trajectory: bool = False
+            ) -> tuple[npt.NDArray[np.floating], list[Problem.State], list[Problem.Action]]:
         w = w_init[:]
         state = np.random.choice(self.problem.STATES)
         action = self.choose_action()
@@ -51,7 +52,8 @@ class Sarsa(Algorithm):
         w_norms = [np.linalg.norm(w)]
 
         for _ in range(20):
-            actions_sequence.append(action)
+            if keep_trajectory:
+                actions_sequence.append(action)
 
             new_state = self.problem.take_action(state, action)
             new_action = self.choose_action()
@@ -64,7 +66,8 @@ class Sarsa(Algorithm):
 
             state = new_state
             action = new_action
-            states_sequence.append(state)
+            if keep_trajectory:
+                states_sequence.append(state)
             w_norms.append(np.linalg.norm(w))
 
-        return w_norms, states_sequence, actions_sequence
+        return np.array(w_norms), states_sequence, actions_sequence
